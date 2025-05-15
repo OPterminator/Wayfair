@@ -1,8 +1,8 @@
+
+import java.time.LocalDate;
 import java.util.*;
 
-//TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
-// click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
-//public class WayCategory {
+public class WayCategory {
     String CategoryName;
     String CategoryParentName;
 
@@ -11,14 +11,18 @@ import java.util.*;
         this.CategoryParentName=CategoryParentName;
     }
 }
+
+
 public class WayCoupon {
     String CategoryName;
     String CouponName;
+    LocalDate DateModified;
 
-    public WayCoupon(String CategoryName,String CouponName){
+
+    public WayCoupon(String CategoryName,String CouponName,LocalDate DateModified){
         this.CategoryName=CategoryName;
         this.CouponName=CouponName;
-
+        this.DateModified=DateModified;
     }
 }
 
@@ -28,6 +32,8 @@ public class Main {
     public static HashMap<String,String>categoryCouponMapping;
     public static HashMap<String,String> categoryParentMapping;
     public static HashMap<String,String> couponCache;
+    public static HashMap<String,List<LocalDate>>couponDateMapping;
+    public static HashMap<String,LocalDate>currentLatestCouponDate;
 
     public static void fillCategoryCouponMapping(){
         for (WayCoupon currentCoupon : couponsInput) {
@@ -39,6 +45,40 @@ public class Main {
             categoryParentMapping.put(category.CategoryName,category.CategoryParentName);
         }
     }
+    public static void fillCouponDateMapping(){
+        for(WayCoupon currentCoupon:couponsInput){
+            if(!couponDateMapping.containsKey(currentCoupon.CouponName)){
+                List<LocalDate>couponDates=new ArrayList<>();
+                couponDates.add(currentCoupon.DateModified);
+                couponDateMapping.put(currentCoupon.CouponName,couponDates);
+            }else{
+                couponDateMapping.get(currentCoupon.CouponName).add(currentCoupon.DateModified);
+            }
+        }
+    }
+
+
+    public static void fillCurrentLatestCouponDate(LocalDate currentDate){
+        for(Map.Entry<String,List<LocalDate>>entry:couponDateMapping.entrySet()){
+            List<LocalDate>dates = entry.getValue();
+            Collections.sort(dates);
+            int low=0,high=dates.size();
+            while (low < high) {
+                int mid = low + (high - low) / 2;
+                if (dates.get(mid).isAfter(currentDate)) {
+                    high = mid;
+                } else {
+                    low = mid + 1;
+                }
+            }
+            if(low==0){
+                currentLatestCouponDate.put(entry.getKey(), LocalDate.MIN);
+            }else{
+                currentLatestCouponDate.put(entry.getKey(), dates.get(low-1));
+            }
+        }
+    }
+
     public static String parentCoupon(String currentCategory) {
         return parentCouponHelper(currentCategory, new HashSet<>());
     }
@@ -46,19 +86,15 @@ public class Main {
         if (visited.contains(currentCategory)) {
             throw new RuntimeException("Cycle detected involving category: " + currentCategory);
         }
-
         visited.add(currentCategory);
-
         if (categoryCouponMapping.containsKey(currentCategory)) {
             couponCache.put(currentCategory, categoryCouponMapping.get(currentCategory));
             return categoryCouponMapping.get(currentCategory);
         }
-
         String parentCategory = categoryParentMapping.get(currentCategory);
         if (parentCategory == null) {
             return null; // Or handle as "no coupon found"
         }
-
         String parentCatCoupon = parentCouponHelper(parentCategory, visited);
         couponCache.put(currentCategory, parentCatCoupon);
         return parentCatCoupon;
@@ -67,11 +103,16 @@ public class Main {
         categoryCouponMapping = new HashMap<>();
         categoryParentMapping = new HashMap<>();
         couponCache = new HashMap<>();
-
+        couponDateMapping = new HashMap<>();
+        currentLatestCouponDate = new HashMap<>();
         couponsInput = Arrays.asList(
-                new WayCoupon("Comforter Sets", "Comforters Sale"),
-                new WayCoupon("Bedding", "Savings on Bedding"),
-                new WayCoupon("Bed & Bath", "Low price for Bed & Bath")
+                new WayCoupon("Comforter Sets", "Comforters Sale", LocalDate.parse("2021-01-01")),
+                new WayCoupon("Comforter Sets", "Cozy Comforter Coupon", LocalDate.parse("2020-01-01")),
+                new WayCoupon("Bedding", "Best Bedding Bargains",LocalDate.parse("2019-01-01")),
+                new WayCoupon("Bedding", "Savings on Bedding",LocalDate.parse( "2019-01-01")),
+                new WayCoupon("Bed & Bath", "Low price for Bed & Bath",LocalDate.parse("2018-01-01")),
+                new WayCoupon("Bed & Bath", "Bed & Bath extravaganza",LocalDate.parse("2019-01-01")),
+                new WayCoupon("Bed & Bath", "Big Savings for Bed & Bath",LocalDate.parse("2030-01-01"))
         );
         categoriesInput = Arrays.asList(
                 new WayCategory("Comforter Sets", "Bedding"),
@@ -85,6 +126,8 @@ public class Main {
 
         fillCategoryCouponMapping();
         fillCategoryParentMapping();
+        fillCouponDateMapping();
+        fillCurrentLatestCouponDate(LocalDate.now());
 
         for (WayCategory currentCategory : categoriesInput) {
             if (!couponCache.containsKey(currentCategory.CategoryName)) {
@@ -95,6 +138,19 @@ public class Main {
         for (Map.Entry<String, String> entry : couponCache.entrySet()) {
             System.out.println(entry.getKey() + " => " + entry.getValue());
         }
+
+        for(Map.Entry<String,List<LocalDate>> entry:couponDateMapping.entrySet()){
+            List<LocalDate> dates = entry.getValue();
+            System.out.println("The key is "+entry.getKey());
+            for(LocalDate localDate:dates){
+                System.out.print("d"+localDate);
+            }
+        }
+        for(Map.Entry<String,LocalDate> entry:currentLatestCouponDate.entrySet()){
+            System.out.println(entry.getKey()+entry.getValue());
+        }
+
+
     }
 
 }
