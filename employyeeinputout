@@ -1,0 +1,75 @@
+ public List<List<String>> employeeRecords(String[][] records) {
+
+    Set<String> enterList = new HashSet<>();
+    Set<String> exitList = new HashSet<>();
+    Map<String, Integer> recordsMap = new HashMap<>();
+    final String ENTER  = "enter";
+    final String EXIT  = "exit";
+    for (String[] record: records) {
+        String emp = record[0]; // The employee name.
+        String val = record[1]; // enter or exit.
+
+        // Check whether the employee has 'entered' into building.
+        if (recordsMap.containsKey(emp)) {
+            if (!val.equals(EXIT)) { // Wrong 'enter', if the next log is not 'exit'. 
+                enterList.add(emp); // add it to faulty enter-list. 
+            } else {
+                recordsMap.remove(emp); // employee has exited, remove from map.  
+            }
+        } else {
+            if (!val.equals(ENTER)) { // expecting 'enter' here, but found 'exit'. Add to faulty 'exit list'. 
+                exitList.add(emp);
+            } else {
+                recordsMap.put(emp, 1); // valid 'enter' for this employee. 
+            }
+        }
+    }
+
+    // put all the employees into faulty enter-list. 
+    // for all the valid cases, the map should be empty. 
+    enterList.addAll(recordsMap.keySet());
+
+    return new ArrayList<List<String>>(){
+        {
+            add(new ArrayList<>(enterList));
+            add(new ArrayList<>(exitList));
+        }
+    };
+}
+
+private static void test1() {
+    String[][] records1 = {
+        {"Paul", "enter"},
+        {"Pauline", "exit"},
+        {"Paul", "enter"},
+        {"Paul", "exit"},
+        {"Martha", "exit"},
+        {"Joe", "enter"},
+        {"Martha", "enter"},
+        {"Steve", "enter"},
+        {"Martha", "exit"},
+        {"Jennifer", "enter"},
+        {"Joe", "enter"},
+        {"Curtis", "exit"},
+        {"Curtis", "enter"},
+        {"Joe", "exit"},
+        {"Martha", "enter"},
+        {"Martha", "exit"},
+        {"Jennifer", "exit"},
+        {"Joe", "enter"},
+        {"Joe", "enter"},
+        {"Martha", "exit"},
+        {"Joe", "exit"},
+        {"Joe", "exit"}
+    };
+    Solution solution = new Solution();
+    List<List<String>> employees = solution.employeeRecords(records1);
+   
+    List<String> enterList = employees.get(0);
+    List<String> exitList = employees.get(1);
+    //enterList.toArray(new String[enterList.size()]);
+    System.out.println("enterList: " + Arrays.toString(enterList.toArray()));
+    System.out.println("exitList: " + Arrays.toString(exitList.toArray()));
+
+    //Expected output: ["Steve", "Curtis", "Paul", "Joe"], ["Martha", "Pauline", "Curtis", "Joe"]
+}
