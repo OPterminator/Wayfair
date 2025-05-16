@@ -1,0 +1,117 @@
+// Interface for Package (if provided)
+interface IPackage {
+    int getId();
+    double getLength();
+    double getWidth();
+    double getHeight();
+    double getWeight();
+    // Potentially String getPackageName();
+}
+
+// Package Class
+class Package implements IPackage {
+    private int id;
+    private double length;
+    private double width;
+    private double height;
+    private double weight;
+    // private String packageName; // if applicable
+
+    public Package(int id, double length, double width, double height, double weight /*, String packageName*/) {
+        this.id = id;
+        this.length = length;
+        this.width = width;
+        this.height = height;
+        this.weight = weight;
+        // this.packageName = packageName;
+    }
+
+    // Getters for all properties
+    @Override
+    public int getId() { return id; }
+    // ... other getters
+
+    public double calculateLWH() {
+        return length * width * height;
+    }
+}
+
+// Interface for Shipping (if provided)
+interface IShipping {
+    void addPackage(IPackage pack);
+    void removePackage(int id);
+    int calculateTotalShippingCost();
+    Map<String, Integer> packageList();
+    Map<String, List<Integer>> categoryList(); // Assuming list of package IDs
+}
+
+// Cargo Class
+class Cargo implements IShipping {
+    private List<IPackage> packages;
+
+    public Cargo() {
+        this.packages = new ArrayList<>();
+    }
+
+    @Override
+    public void addPackage(IPackage pack) {
+        this.packages.add(pack);
+    }
+
+    @Override
+    public void removePackage(int id) {
+        // Find and remove package with the given id
+        this.packages.removeIf(p -> p.getId() == id);
+    }
+
+    @Override
+    public int calculateTotalShippingCost() {
+        int totalCost = 0;
+        for (IPackage pack : packages) {
+            double lwh = ((Package) pack).calculateLWH(); // Assuming Package class has this
+            if (lwh <= 100000) {
+                totalCost += 10;
+            } else if (lwh <= 500000) { // Assuming corrected range
+                totalCost += 20;
+            } else {
+                totalCost += 30;
+            }
+        }
+        return totalCost;
+    }
+
+    @Override
+    public Map<String, Integer> packageList() {
+        Map<String, Integer> packageCounts = new HashMap<>();
+        // This depends on how "packagename" is defined.
+        // If each package is unique and has an ID as its "name":
+        for (IPackage pack : packages) {
+            packageCounts.put("PackageID_" + pack.getId(), 1); // Example
+            // Or if there's a getPackageName() method:
+            // String name = ((Package)pack).getPackageName();
+            // packageCounts.put(name, packageCounts.getOrDefault(name, 0) + 1);
+        }
+        return packageCounts;
+    }
+
+    @Override
+    public Map<String, List<Integer>> categoryList() {
+        Map<String, List<Integer>> categories = new HashMap<>();
+        categories.put("small", new ArrayList<>());
+        categories.put("medium", new ArrayList<>());
+        categories.put("large", new ArrayList<>());
+
+        for (IPackage pack : packages) {
+            double weight = pack.getWeight();
+            int packageId = pack.getId();
+            if (weight <= 5) {
+                categories.get("small").add(packageId);
+            } else if (weight <= 10) {
+                categories.get("medium").add(packageId);
+            } else {
+                categories.get("large").add(packageId);
+            }
+        }
+        return categories;
+    }
+}
