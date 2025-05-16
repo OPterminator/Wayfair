@@ -1,0 +1,143 @@
+import java.util.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+public class Solution {
+    public static class WayCoupon {
+        private String categoryName;
+        private String couponName;
+        
+        public WayCoupon(String categoryName, String couponName) {
+            this.categoryName = categoryName;
+            this.couponName = couponName;
+        }
+        
+        public String getCategoryName() {
+            return categoryName;
+        }
+        
+        public String getCouponName() {
+            return couponName;
+        }
+        
+        @Override
+        public String toString() {
+            return "WayCoupon{categoryName='" + categoryName + "', couponName='" + couponName + "'}";
+        }
+    }
+    
+    public static class WayCategory {
+        private String categoryName;
+        private String categoryParentName;
+        
+        public WayCategory(String categoryName, String categoryParentName) {
+            this.categoryName = categoryName;
+            this.categoryParentName = categoryParentName;
+        }
+        
+        public String getCategoryName() {
+            return categoryName;
+        }
+        
+        public String getCategoryParentName() {
+            return categoryParentName;
+        }
+        
+        @Override
+        public String toString() {
+            return "WayCategory{categoryName='" + categoryName + "', categoryParentName='" + 
+                   (categoryParentName != null ? categoryParentName : "null") + "'}";
+        }
+    }
+    
+    public static List<WayCoupon> couponsInput;
+    public static List<WayCategory> categoriesInput;
+    
+    public static void main(String[] args) throws IOException {
+        couponsInput = new ArrayList<>();
+        categoriesInput = new ArrayList<>();
+        
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        PrintWriter textWriter = new PrintWriter(System.out);
+        
+        textWriter.println("Enter the Coupons data (enter the JSON array as it appears):");
+        textWriter.flush();
+        StringBuilder couponsBuilder = new StringBuilder();
+        String line;
+        while ((line = br.readLine()) != null) {
+            line = line.trim();
+            couponsBuilder.append(line);
+            if (line.endsWith("]")) {
+                break;
+            }
+        }
+        String couponsData = couponsBuilder.toString();
+        // Extract the JSON array part
+        int start = couponsData.indexOf('[');
+        int end = couponsData.lastIndexOf(']');
+        if (start != -1 && end != -1) {
+            couponsData = couponsData.substring(start, end + 1);
+        } else {
+            textWriter.println("Invalid Coupons JSON array");
+            return;
+        }
+        
+        // Parse coupons
+        Pattern couponPattern = Pattern.compile("\\{\"CategoryName\":\"([^\"]+)\",\\s*\"CouponName\":\"([^\"]+)\"\\}");
+        Matcher couponMatcher = couponPattern.matcher(couponsData);
+        while (couponMatcher.find()) {
+            couponsInput.add(new WayCoupon(couponMatcher.group(1), couponMatcher.group(2)));
+        }
+        
+        textWriter.println("Enter the Categories data (enter the JSON array as it appears):");
+        textWriter.flush();
+        StringBuilder categoriesBuilder = new StringBuilder();
+        while ((line = br.readLine()) != null) {
+            line = line.trim();
+            categoriesBuilder.append(line);
+            if (line.endsWith("]")) {
+                break;
+            }
+        }
+        String categoriesData = categoriesBuilder.toString();
+        start = categoriesData.indexOf('[');
+        end = categoriesData.lastIndexOf(']');
+        if (start != -1 && end != -1) {
+            categoriesData = categoriesData.substring(start, end + 1);
+        } else {
+            textWriter.println("Invalid Categories JSON array");
+            return;
+        }
+        
+        // Parse categories
+        Pattern categoryPattern = Pattern.compile("\\{\"CategoryName\":\"([^\"]+)\",\\s*\"CategoryParentName\":([^\\}]+)\\}");
+        Matcher categoryMatcher = categoryPattern.matcher(categoriesData);
+        while (categoryMatcher.find()) {
+            String categoryName = categoryMatcher.group(1);
+            String parentNameRaw = categoryMatcher.group(2).trim();
+            String parentName = null;
+            if (!parentNameRaw.equals("null")) {
+                if (parentNameRaw.startsWith("\"") && parentNameRaw.endsWith("\"")) {
+                    parentName = parentNameRaw.substring(1, parentNameRaw.length() - 1);
+                } else {
+                    parentName = parentNameRaw;
+                }
+            }
+            categoriesInput.add(new WayCategory(categoryName, parentName));
+        }
+        for(WayCoupon c1:couponsInput){
+            System.out.println(c1.toString());
+        }
+        for(WayCoupon c1:couponsInput){
+            System.out.println(c1.toString());
+        }
+
+        br.close();
+    }
+}
