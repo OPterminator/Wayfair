@@ -29,17 +29,23 @@ public class WayCoupon {
 public class Main {
     public static List<WayCoupon> couponsInput;
     public static List<WayCategory> categoriesInput;
-    public static HashMap<String,String>categoryCouponMapping;
+    public static HashMap<String,List<WayCoupon>>categoryCouponMapping;
     public static HashMap<String,String> categoryParentMapping;
-    public static HashMap<String,String> couponCache;
+    public static HashMap<String,List<WayCoupon>> couponCache;
     public static HashMap<String,List<LocalDate>>couponDateMapping;
     public static HashMap<String,LocalDate>currentLatestCouponDate;
 
     public static void fillCategoryCouponMapping(){
         for (WayCoupon currentCoupon : couponsInput) {
-            categoryCouponMapping.put(currentCoupon.CategoryName, currentCoupon.CouponName);
+            if(!categoryCouponMapping.containsKey(currentCoupon.CategoryName)){
+                List<WayCoupon>couponList = new ArrayList<>();
+                categoryCouponMapping.put(currentCoupon.CategoryName,couponList);
+            }else {
+                categoryCouponMapping.get(currentCoupon.CategoryName).add(currentCoupon);
+            }
         }
     }
+
     public static void fillCategoryParentMapping(){
         for(WayCategory category:categoriesInput){
             categoryParentMapping.put(category.CategoryName,category.CategoryParentName);
@@ -59,13 +65,18 @@ public class Main {
 
 
     public static void fillCurrentLatestCouponDate(LocalDate currentDate){
-        for(Map.Entry<String,List<LocalDate>>entry:couponDateMapping.entrySet()){
-            List<LocalDate>dates = entry.getValue();
-            Collections.sort(dates);
+        for(Map.Entry<String,List<WayCoupon>>entry:couponCache.entrySet()){
+            List<WayCoupon> couponList = entry.getValue();
+            Collections.sort(couponList, new Comparator<WayCoupon>() {
+                @Override
+                public int compare(WayCoupon c1, WayCoupon c2) {
+                    return c1.DateModified.compareTo(c2.DateModified);
+                }
+            });
             int low=0,high=dates.size();
             while (low < high) {
                 int mid = low + (high - low) / 2;
-                if (dates.get(mid).isAfter(currentDate)) {
+                if (couponList.get(mid).DateModified.isAfter(currentDate)) {
                     high = mid;
                 } else {
                     low = mid + 1;
@@ -79,10 +90,10 @@ public class Main {
         }
     }
 
-    public static String parentCoupon(String currentCategory) {
+    public static List<WayCoupon> parentCoupon(String currentCategory) {
         return parentCouponHelper(currentCategory, new HashSet<>());
     }
-    private static String parentCouponHelper(String currentCategory, Set<String> visited) {
+    private static List<WayCoupon> parentCouponHelper(String currentCategory, Set<String> visited) {
         if (visited.contains(currentCategory)) {
             throw new RuntimeException("Cycle detected involving category: " + currentCategory);
         }
@@ -95,10 +106,11 @@ public class Main {
         if (parentCategory == null) {
             return null; // Or handle as "no coupon found"
         }
-        String parentCatCoupon = parentCouponHelper(parentCategory, visited);
+        List<WayCoupon> parentCatCoupon = parentCouponHelper(parentCategory, visited);
         couponCache.put(currentCategory, parentCatCoupon);
         return parentCatCoupon;
     }
+
     public static void main(String[] args) {
         categoryCouponMapping = new HashMap<>();
         categoryParentMapping = new HashMap<>();
@@ -149,7 +161,6 @@ public class Main {
         for(Map.Entry<String,LocalDate> entry:currentLatestCouponDate.entrySet()){
             System.out.println(entry.getKey()+entry.getValue());
         }
-
 
     }
 
