@@ -1,0 +1,65 @@
+class Order {
+    // Properties: orderId, items, originalAmount, etc.
+    double originalAmount;
+
+    public Order(double originalAmount) {
+        this.originalAmount = originalAmount;
+    }
+
+    public double getOriginalAmount() {
+        return originalAmount;
+    }
+}
+
+class OrderBill {
+    private Order order;
+    private double discountedAmount;
+    private double finalAmount;
+
+    public OrderBill(Order order) {
+        this.order = order;
+        this.calculateBill();
+    }
+
+    private void calculateBill() {
+        double amount = order.getOriginalAmount();
+        double discount = 0;
+
+        if (amount < 40) {
+            discount = 20; // Flat $20 discount. Ensure amount - discount >= 0
+                           // Or it might be a specific discount *up to* $20 if the item costs less.
+                           // For example, if item is $15, discount is $15.
+                           // Most likely: if amount >= 20, then discount is 20. Else, discount is 'amount'.
+                           // Let's assume for now: discount is 20, but final price cannot be negative.
+        } else if (amount < 100) { // 40 <= amount < 100
+            discount = amount * 0.20; // 20% discount
+        } else { // amount >= 100
+            discount = amount * 0.15; // 15% discount
+        }
+
+        this.discountedAmount = amount - discount;
+        this.finalAmount = Math.max(0, this.discountedAmount); // Ensure bill is not negative
+    }
+
+    public double getFinalAmount() {
+        return finalAmount;
+    }
+
+    public double getDiscountApplied() {
+        return order.getOriginalAmount() - finalAmount;
+    }
+}
+
+// Example Usage:
+Order order1 = new Order(40);
+OrderBill bill1 = new OrderBill(order1);
+// bill1.getFinalAmount() would be 40 - (40 * 0.20) = 40 - 8 = 32
+
+Order order2 = new Order(100);
+OrderBill bill2 = new OrderBill(order2);
+// bill2.getFinalAmount() would be 100 - (100 * 0.15) = 100 - 15 = 85
+
+Order order3 = new Order(30); // Example for < 40
+OrderBill bill3 = new OrderBill(order3);
+// bill3.getFinalAmount() would be 30 - 20 = 10.
+// If order was $15, final amount should be $0, not -$5.
